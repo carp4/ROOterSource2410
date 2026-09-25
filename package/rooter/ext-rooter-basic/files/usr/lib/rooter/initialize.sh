@@ -27,9 +27,14 @@ do_zone() {
 			COUNTER=1
 			while [ $COUNTER -le 5 ]; do
 				newnet="$newnet wan$COUNTER"
+				newnet="$newnet wan$COUNTER"_6
 				let COUNTER=COUNTER+1
 			done
 			uci_set firewall "$config" network "$newnet"
+			MASQ6=$(uci_get firewall "$config" masq6)
+			if [ -z "$MASQ6" ]; then
+				uci_set firewall "$config" masq6 "1"
+			fi
 			uci_commit firewall
 			/etc/init.d/firewall restart
 		fi
