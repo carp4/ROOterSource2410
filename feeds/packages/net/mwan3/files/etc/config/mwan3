@@ -44,8 +44,19 @@ config interface 'wan1_6'
 	list track_ip '2606:4700::1001'
 	list track_ip '2001:4860:4860::8888'
 	list track_ip '2620:fe::9'
-	list flush_conntrack 'connected'
-	list flush_conntrack 'disconnected'
+	# IPv6 members here sit on carriers that rotate the delegated /64 on
+	# renew. The tracker can fail every target during a rotation while the
+	# link is perfectly fine. Do NOT flush conntrack on the tracker's
+	# connected/disconnected events: each such churn kills every live LAN
+	# session. netifd still fires ifup/ifdown on a real link transition, so
+	# genuine outages flush. IPv4 members keep the stock list: they are not
+	# on rotating carriers, and this was not observed to break them.
+	#
+	# This is the factory default for the members that ship here. A box
+	# configured for a different modem count gets its extra members enabled
+	# at boot (initialize.sh, driven by maxmodem.maxmodem.maxmodem) and any
+	# member added later needs roo_fix re-run, which enumerates members
+	# live rather than assuming this list.
 	list flush_conntrack 'ifup'
 	list flush_conntrack 'ifdown'
 
@@ -113,8 +124,19 @@ config interface 'wan2_6'
 	list track_ip '2606:4700::1001'
 	list track_ip '2001:4860:4860::8888'
 	list track_ip '2620:fe::9'
-	list flush_conntrack 'connected'
-	list flush_conntrack 'disconnected'
+	# IPv6 members here sit on carriers that rotate the delegated /64 on
+	# renew. The tracker can fail every target during a rotation while the
+	# link is perfectly fine. Do NOT flush conntrack on the tracker's
+	# connected/disconnected events: each such churn kills every live LAN
+	# session. netifd still fires ifup/ifdown on a real link transition, so
+	# genuine outages flush. IPv4 members keep the stock list: they are not
+	# on rotating carriers, and this was not observed to break them.
+	#
+	# This is the factory default for the members that ship here. A box
+	# configured for a different modem count gets its extra members enabled
+	# at boot (initialize.sh, driven by maxmodem.maxmodem.maxmodem) and any
+	# member added later needs roo_fix re-run, which enumerates members
+	# live rather than assuming this list.
 	list flush_conntrack 'ifup'
 	list flush_conntrack 'ifdown'
 
@@ -182,8 +204,8 @@ config interface 'wan3_6'
 	list track_ip '2606:4700::1001'
 	list track_ip '2001:4860:4860::8888'
 	list track_ip '2620:fe::9'
-	list flush_conntrack 'connected'
-	list flush_conntrack 'disconnected'
+	# See the wan1_6 comment above: IPv6 members do not flush conntrack on
+	# tracker churn, because prefix rotation makes that churn routine.
 	list flush_conntrack 'ifup'
 	list flush_conntrack 'ifdown'
 
@@ -251,8 +273,8 @@ config interface 'wan4_6'
 	list track_ip '2606:4700::1001'
 	list track_ip '2001:4860:4860::8888'
 	list track_ip '2620:fe::9'
-	list flush_conntrack 'connected'
-	list flush_conntrack 'disconnected'
+	# See the wan1_6 comment above: IPv6 members do not flush conntrack on
+	# tracker churn, because prefix rotation makes that churn routine.
 	list flush_conntrack 'ifup'
 	list flush_conntrack 'ifdown'
 
@@ -320,8 +342,8 @@ config interface 'wan5_6'
 	list track_ip '2606:4700::1001'
 	list track_ip '2001:4860:4860::8888'
 	list track_ip '2620:fe::9'
-	list flush_conntrack 'connected'
-	list flush_conntrack 'disconnected'
+	# See the wan1_6 comment above: IPv6 members do not flush conntrack on
+	# tracker churn, because prefix rotation makes that churn routine.
 	list flush_conntrack 'ifup'
 	list flush_conntrack 'ifdown'
 
@@ -389,8 +411,19 @@ config interface 'wan6'
 	list track_ip '2620:fe::fe'
 	list track_ip '2001:4860:4860::8888'
 	list track_ip '2606:4700:4700::1111'
-	list flush_conntrack 'connected'
-	list flush_conntrack 'disconnected'
+	# IPv6 members here sit on carriers that rotate the delegated /64 on
+	# renew. The tracker can fail every target during a rotation while the
+	# link is perfectly fine. Do NOT flush conntrack on the tracker's
+	# connected/disconnected events: each such churn kills every live LAN
+	# session. netifd still fires ifup/ifdown on a real link transition, so
+	# genuine outages flush. IPv4 members keep the stock list: they are not
+	# on rotating carriers, and this was not observed to break them.
+	#
+	# This is the factory default for the members that ship here. A box
+	# configured for a different modem count gets its extra members enabled
+	# at boot (initialize.sh, driven by maxmodem.maxmodem.maxmodem) and any
+	# member added later needs roo_fix re-run, which enumerates members
+	# live rather than assuming this list.
 	list flush_conntrack 'ifup'
 	list flush_conntrack 'ifdown'
 
@@ -435,8 +468,6 @@ config interface 'wwan26'
 	list track_ip '2606:4700::1001'
 	list track_ip '2001:4860:4860::8888'
 	list track_ip '2620:fe::9'
-	list flush_conntrack 'connected'
-	list flush_conntrack 'disconnected'
 	list flush_conntrack 'ifup'
 	list flush_conntrack 'ifdown'
 
@@ -481,8 +512,6 @@ config interface 'wwan56'
 	list track_ip '2606:4700::1001'
 	list track_ip '2001:4860:4860::8888'
 	list track_ip '2620:fe::9'
-	list flush_conntrack 'connected'
-	list flush_conntrack 'disconnected'
 	list flush_conntrack 'ifup'
 	list flush_conntrack 'ifdown'
 
