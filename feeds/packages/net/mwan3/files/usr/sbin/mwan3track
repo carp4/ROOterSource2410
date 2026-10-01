@@ -232,7 +232,7 @@ firstconnect() {
 # answers this round (true carrier outage) fall back to a route-valid
 # source so normal failure accounting keeps running.
 refresh_src_ip() {
-	local cand probe_ip
+	local cand probe_ip cands
 	[ "$FAMILY" = "ipv6" ] || return 0
 	[ -n "$DEVICE" ] || return 0
 	for probe_ip in $track_ips; do break; done

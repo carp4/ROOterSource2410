@@ -5,7 +5,11 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ext-rooter-basic
 PKG_VERSION:=4.500
-PKG_RELEASE:=5
+# r10: /etc/hotplug.d/iface/50-z8102-wan6-mwan3 generalized to every enabled
+# ipv6 mwan3 member, with withdrawal handling. Bumped because the package
+# gains a new installed file -- without this the ipk keeps the same version
+# with different contents and opkg will not upgrade an existing install.
+PKG_RELEASE:=10
 
 PKG_MAINTAINER:=Created by DM/makefile by Cobia@whirlpool
 include $(INCLUDE_DIR)/package.mk
