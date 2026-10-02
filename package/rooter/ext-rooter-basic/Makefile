@@ -9,7 +9,24 @@ PKG_VERSION:=4.500
 # ipv6 mwan3 member, with withdrawal handling. Bumped because the package
 # gains a new installed file -- without this the ipk keeps the same version
 # with different contents and opkg will not upgrade an existing install.
-PKG_RELEASE:=10
+# r11: two changes to /etc/hotplug.d/iface/50-z8102-wan6-mwan3, both needed.
+#   (1) It no longer restarts mwan3 on an ipv6 rotation. The restart was global
+#       (this mwan3 has no per-member restart, and reload == stop; start), so it
+#       reset every member to its initial_state and put the ipv4 legs offline
+#       for ~50s -- an ipv6 event breaking ipv4. The tracker re-derives its own
+#       source (refresh_src_ip), so the hotplug now only records the change, and
+#       only ever cycles an interface on withdrawal.
+#   (2) The ACTION gate was widened from ACTION=ifupdate alone to
+#       ifup|connected|ifupdate. ifupdate is real (netifd emitted it twice for
+#       wan2_6 during a live rotation on 2026-10-02) but it only ever fires on a
+#       ROTATION. A WITHDRAWAL -- interface up, global address gone, the actual
+#       outage -- emits ifdown->ifup->connected and NO ifupdate, so the old gate
+#       saw nothing and the withdrawal branch was unreachable. ifdown and
+#       disconnected stay excluded: the withdrawal branch cycles the interface
+#       back UP, so reacting to a way-down event would fight a shutdown.
+# Bumped because the installed file changed contents and opkg will not upgrade
+# an existing install at the same version.
+PKG_RELEASE:=11
 
 PKG_MAINTAINER:=Created by DM/makefile by Cobia@whirlpool
 include $(INCLUDE_DIR)/package.mk
