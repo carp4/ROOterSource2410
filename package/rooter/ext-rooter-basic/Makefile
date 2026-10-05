@@ -24,9 +24,41 @@ PKG_VERSION:=4.500
 #       saw nothing and the withdrawal branch was unreachable. ifdown and
 #       disconnected stay excluded: the withdrawal branch cycles the interface
 #       back UP, so reacting to a way-down event would fight a shutdown.
+# r12: adds /etc/hotplug.d/iface/99-pd-default.sh, a new installed file. This
+#     installs a PLAIN (non-source-locked) ipv6 default route alongside the ones
+#     odhcp6c creates, so LAN clients holding ULA addresses get ipv6 egress via
+#     NAT66. odhcp6c only creates `default from <modem /64>:: via <gw> metric
+#     512`, which matches nothing a LAN client sends, so client v6 traffic dies
+#     while the uplink looks healthy. Ported from the z8102-custom-config gold
+#     (89-pd-default-fix) but NOT verbatim: the gold hardcodes three
+#     interface->device pairs for a fixed two-modem layout, and ROOter pins
+#     maxmodem=4 when mwan3 is present, so wan3_6/wan4_6 would be silently
+#     skipped. This derives the device from whichever interface actually
+#     carries an ipv6 default, so it self-scales. Also bumped because a new
+#     installed file at an unchanged version leaves the ipk looking identical to
+#     opkg and it will not upgrade an existing install.
 # Bumped because the installed file changed contents and opkg will not upgrade
 # an existing install at the same version.
-PKG_RELEASE:=11
+# r13: two changes, both shipping-image defaults rather than code.
+#   (1) /etc/config/maxmodem now ships maxmodem '5' with custom '1'. 5 is the
+#       hard ceiling of ROOter's own GUI (multimodem.htm offers 1-5 and nothing
+#       else), and 5 modem members is what the shipped /etc/config/mwan3
+#       declares. The 'custom' flag is the load-bearing part: initialize.sh's
+#       firstboot() overwrites maxmodem to 4 whenever /etc/config/mwan3 exists
+#       UNLESS custom == 1, so shipping 5 alone would silently become 4 on the
+#       first boot after a clean flash and wan5/wan5_6 would never be enabled.
+#       Nothing else in the tree reads 'custom' -- it exists only to suppress
+#       that auto-derivation. This also invalidates the r12 note above: ROOter no
+#       longer pins maxmodem to 4, so 99-pd-default.sh's self-scaling device
+#       derivation is now exercised over 5 modems rather than 4.
+#   (2) /etc/hotplug.d/iface/10-lan strips a prefix length off network.lan.ipaddr
+#       before writing dnsmasq's address=/rooter.local/ line. 24.10's
+#       config_generate writes the address bare, so this is hardening rather
+#       than a fix for a clean flash -- but a config that came in with a
+#       "192.168.1.1/24" made dnsmasq refuse to start ("Bad address in
+#       --address"), taking the resolver down with it. Also guards an empty
+#       ipaddr, which would otherwise write the same broken line.
+PKG_RELEASE:=13
 
 PKG_MAINTAINER:=Created by DM/makefile by Cobia@whirlpool
 include $(INCLUDE_DIR)/package.mk

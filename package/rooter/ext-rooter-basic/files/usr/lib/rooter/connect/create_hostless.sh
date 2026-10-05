@@ -658,6 +658,17 @@ if [ "$PRESERVE" = "1" ] && [ -n "$ifname" ]; then
 	if modem_already_connected "$ifname"; then
 		log "Preserving existing modem connection (no AT-command changes)"
 		rm -f /tmp/usbwait
+		# ROOter-side post-connect steps run in the SAME order as the normal
+		# path (L725-730): TTL/HL + CAKE are applied before connection status
+		# is flagged, so the chkconn watcher's 'Normal Exit' stays the last
+		# log line, matching the normal path (connected=1 written at L1266,
+		# after the TTL block). AT-side machinery is never replicated here -
+		# the modem already owns the session.
+		hostless=$(uci -q get modem.modeminfo$CURRMODEM.hostless)
+		$ROOTER/connect/handlettl.sh $CURRMODEM "$hostless" &
+		if [ -e $ROOTER/connect/quic_bypass.sh ]; then
+			$ROOTER/connect/quic_bypass.sh $CURRMODEM
+		fi
 		ifup wan$INTER
 		while `ifstatus wan$INTER | grep -q '"up": false\|"pending": true'`; do
 			sleep 1
@@ -673,7 +684,6 @@ if [ "$PRESERVE" = "1" ] && [ -n "$ifname" ]; then
 			wan_ip=192.168.0.1
 		fi
 		uci set modem.modem$CURRMODEM.ip=$wan_ip
-		uci set modem.modem$CURRMODEM.connected=1
 		uci commit modem
 		$ROOTER/log/logger "HostlessModem #$CURRMODEM preserved (already connected) with IP $wan_ip"
 		if [ -e $ROOTER/modem-led.sh ]; then
@@ -684,6 +694,23 @@ if [ "$PRESERVE" = "1" ] && [ -n "$ifname" ]; then
 		$ROOTER_LINK/getsignal$CURRMODEM $CURRMODEM $PROT &
 		ln -s $ROOTER/connect/conmon.sh $ROOTER_LINK/con_monitor$CURRMODEM
 		$ROOTER_LINK/con_monitor$CURRMODEM $CURRMODEM &
+		# Connection status is flagged only AFTER the ROOter-side post-connect
+		# steps (mirroring normal-path L1266) so the chkconn watcher's
+		# 'Normal Exit' always lands after TTL/HL/PostConnect/TimeZone logs.
+		uci set modem.modem$CURRMODEM.connected=1
+		uci commit modem
+		if [ $SP -gt 0 ]; then
+			if [ -e $ROOTER/connect/postconnect.sh ]; then
+				$ROOTER/connect/postconnect.sh $CURRMODEM
+			fi
+			if [ -e $ROOTER/timezone.sh ]; then
+				TZ=$(uci -q get modem.modeminfo$CURRMODEM.tzone)
+				if [ "$TZ" = "1" ]; then
+					log "Set TimeZone"
+					$ROOTER/timezone.sh &
+				fi
+			fi
+		fi
 		CLB=1
 		if [ -e /etc/config/mwan3 ]; then
 			ENB=$(uci -q get mwan3.wan$INTER.enabled)
